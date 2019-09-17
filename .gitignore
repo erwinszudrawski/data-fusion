@@ -1,2 +1,9 @@
 .DS_Store
 data/*
+*.dbf
+*.shp
+*.shx
+merged/
+*.tif
+
+
