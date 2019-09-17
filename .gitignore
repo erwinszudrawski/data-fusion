@@ -5,5 +5,5 @@ data/*
 *.shx
 merged/
 *.tif
-
+modules/__pycache__/*
 
