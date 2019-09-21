@@ -37,6 +37,7 @@ class Rasterfile(File):
         Description:
             An instance of this class is a representation of a raster file in the file system.
     '''
+    # Input variables: path - String, an absolute path to the raster file
     def __init__(self, path):
         self.path = path
         assert path[-3:] == 'tif'

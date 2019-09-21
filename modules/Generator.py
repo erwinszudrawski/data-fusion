@@ -19,14 +19,12 @@ class Tile:
     """
 
     # Input variables: path String - relative path to the Sentinel-2 tile.
-    #                  bands - list of band names for this tile
+    #                  bands - list of the band names for this tile
     #                  resolution - resolution of the bands, e.g. R10m, R20m, R60m
-    #                  labels_path - path to a raster file with labels (e.g. CLC map)
-    def __init__(self, path, bands, resolution, labels_path):
+    def __init__(self, path, bands, resolution):
         self.path = path
         self.bands = bands
         self.resolution = resolution
-        self.labels_path = labels_path
 
     # Input variables: bands - A list of bands to convert
     # Output: Numpy array that contains band values in each feature vectors
@@ -43,23 +41,29 @@ class Tile:
             files.append(tf.imread(band_file+'.tif'))
         return np.moveaxis(np.stack(files), 0, 2)
 
-    # Input variables: None
+    # Input variables: clc_map_path - String, path to CLC map.
     # Output: Labels have been aligned with the tile and saved as a raster file
-    def create_labels(self):
+    def create_labels(self, labels_path):
         assert len(self.bands) > 0, "Bands may not be empty"
         tile_dir = self.path+'/'+self.resolution
         band_file = tile_dir + '/' + self.bands[0] + '.tif'
         clipper_path = tile_dir + '/clipper.shp'
         assert os.path.isfile(band_file), "You have to rasterize the tile first."
         labels_output = tile_dir+'/labels.tif'
+        labels_translated = tile_dir+'/labels_translated.tif'
+        projection = tile_dir.split('/')[-2][0:2]
         if not os.path.isfile(labels_output):
             os.system('gdaltindex '+clipper_path+' '+band_file)
-            os.system('gdalwarp -cutline '+clipper_path+' -crop_to_cutline '+self.labels_path+' '+labels_output)
-            ds = gdal.Open(self.labels_path)
-            gdal.Translate(labels_output, ds, width=5376, height=5376)
+            os.system('gdalwarp -t_srs EPSG:326'+projection+' -overwrite -cutline '+clipper_path
+                      + ' -crop_to_cutline '+labels_path+' '+labels_output)
+            ds = gdal.Open(labels_output)
+            gdal.Translate(labels_translated, ds, width=5376, height=5376)
+        os.system('rm '+tile_dir+'/labels.tif && '+'mv '+tile_dir+'/labels_translated.tif '+tile_dir+'/labels.tif')
         ds = None
         return tf.imread(labels_output)
 
+    # Input variables: None
+    # Output: An absolute path to the tile
     def get_path(self):
         return self.path
 
@@ -73,14 +77,16 @@ class TileContainer:
     def __init__(self, tiles):
         self.tiles = tiles
 
-    # Input variables: destination - path to a destination folder
+    # Input variables: destination - path to a destination folder,
+    #                  class_dict_path - path to class csv file
+    #                  labels_path - path to label raster file
     # After: Datasets have been created and saved in the destination folder
-    def create_dataset(self, destination, class_dict_path):
+    def create_dataset(self, destination, class_dict_path, labels_path):
         feature_arrays = []
         labels_arrays = []
         for tile in self.tiles:
             feature_arrays.append(tile.create_rasters())
-            labels_arrays.append(Utils.one_hot_it(tile.create_labels()[:, :, :3], class_dict_path))
+            labels_arrays.append(Utils.one_hot_it(tile.create_labels(labels_path)[:, :, :3], class_dict_path))
         x = np.stack(feature_arrays)
         y = np.stack(labels_arrays)
         os.system('rm -rf '+destination+' && mkdir '+destination)
