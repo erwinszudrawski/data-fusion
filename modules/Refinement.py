@@ -7,7 +7,7 @@
 '''
 import os, ogr, osr, gdal, gdalconst
 
-class File():
+class File:
     '''
         Description:
             An instance of this class is a representation of a file in the file system.
@@ -21,6 +21,7 @@ class File():
     def get_path(self):
         return self.path
 
+
 class Shapefile(File):
     '''
         Description:
@@ -29,6 +30,7 @@ class Shapefile(File):
     def __init__(self, path):
         self.path = path
         assert path[-3:] == 'shp'
+
 
 class Rasterfile(File):
     '''
@@ -39,7 +41,8 @@ class Rasterfile(File):
         self.path = path
         assert path[-3:] == 'tif'
 
-class VectorContainer():
+
+class VectorContainer:
     '''
         Description:
             An instance of this class is a container for Shapefiles.
@@ -102,7 +105,7 @@ class VectorContainer():
         target_ds.SetProjection(target_dsSRS.ExportToWkt())
         target_ds = None
 
-class RasterContainer():
+class RasterContainer:
     '''
         Description:
             An instance of this class is a container for raster files.

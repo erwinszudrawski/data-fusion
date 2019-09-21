@@ -6,4 +6,4 @@ data/*
 merged/
 *.tif
 modules/__pycache__/*
-
+.idea
