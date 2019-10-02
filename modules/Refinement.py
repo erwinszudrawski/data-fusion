@@ -116,6 +116,14 @@ class RasterContainer:
         # Input variables: rasterfiles - list of rasters
         self.rasterfiles = rasterfiles
 
+    def convert_to_nodata(self, values):
+        for raster in self.rasterfiles:
+            calc = 'A*('
+            for val in values:
+                calc += '(A!='+str(val)+')*'
+            calc = calc[:-1]
+            calc += ')'
+            os.system('gdal_calc.py -A '+raster+' --outfile='+raster+' --calc="'+calc+'"')
     # Input variables: None
     # After: Files in this container have been merged into one raster file.
     def merge(self):
